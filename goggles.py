@@ -4,6 +4,7 @@ import random
 import time
 import webbrowser
 
+
 #
 # this function returns a connection to the twitter API, using credentials loaded from creds.txt
 #
@@ -67,18 +68,27 @@ listName = "goggles"
 # create a new list called 'goggles' with the generated description
 goggles = api.create_list(name=listName, mode='public', description=desc)
 
+def chunks(l, n):
+	"""Yield successive n-sized chunks from l."""
+	for i in xrange(0, len(l), n):
+		yield l[i:i+n]
+
+
+def add_in_batches(owner_screen_name, slug, user_id):
+	"""Add user IDs to list in batches of 100"""
+	for x, batch in enumerate(chunks(user_id, 100)):
+		print "adding " + str(x)
+		ret = api.add_list_members(slug=slug, user_id=batch,
+							 owner_screen_name=owner_screen_name)
+
+
 # populate list; twitter lists are limited to 5,000 members,
 # so grab a random sampling if necessary
-if len(newids) <= 5000:
-	for x, pal in list(enumerate(newids)):
-		print "adding " + str(x)
-		api.add_list_member(slug=listName, id=pal, owner_screen_name=myID)
-else:
-
+if len(newids) > 5000:
 	random.shuffle(newids)
-	for x, pal in list(enumerate(newids[0:5000])):
-		print "adding " + str(x)
-		api.add_list_member(slug=listName, id=pal, owner_screen_name=myID)
+	newids = newids[0:5000]
+
+add_in_batches(myID, goggles.slug, newids)
 
 # we did it
 print "complete"
